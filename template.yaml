@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Trade Desk UID2
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+
+Resources:
+  IdRefreshService:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: trade_desk_enrichment/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Description: Lambda function to consume audience membership messages from mParticle and enrich users profiles with UID2.0
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: BUFFERED
+      Environment:
+        Variables:
+          LogLevel: logging.DEBUG
+          mParticleEnvironment: development # switch to production when ready
+          mParticleFeedKey: mParticleFeedKey
+          mParticleFeedSecret: mParticleFeedSecret
+          UIDKey: UIDKey
+          UIDSecret: UIDSecret
+          UIDURL: "https://prod.uidapi.com/v2/identity/map"
+          EVENT_NAME: UID Token Enriched
+
+
+  LambdaPermissionInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref IdRefreshService
+      Action: lambda:InvokeFunction
+      Principal: 338661164609
+  LambdaPermissionSecond:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref IdRefreshService
+      Action: lambda:InvokeFunction
+      Principal: 457804467337
+
